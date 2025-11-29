@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Debug Buttons</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 2rem;
+            background: #05060b;
+            color: #edf0ff;
+            font-family: system-ui, sans-serif;
+        }
+        button {
+            padding: 1rem 2rem;
+            background: #8d79ff;
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 1.1rem;
+            cursor: pointer;
+            margin: 1rem;
+            display: block;
+        }
+        button:hover {
+            background: #9d89ff;
+        }
+        .log {
+            background: #1a1b26;
+            padding: 1rem;
+            margin: 1rem 0;
+            border-radius: 8px;
+            font-family: monospace;
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body>
+    <h1>Button Click Debug</h1>
+    <div id="log" class="log">Waiting for clicks...</div>
+    
+    <h2>Test 1: Direct onclick</h2>
+    <button onclick="testClick('Test 1')">Click Me (Direct)</button>
+    
+    <h2>Test 2: Function call</h2>
+    <button onclick="handleBuyClick('Eclipse Seraph', '₹2400')">Buy Eclipse Seraph</button>
+    
+    <h2>Test 3: Dynamic button (like catalog)</h2>
+    <div id="dynamic-container"></div>
+    
+    <script>
+        function log(message) {
+            const logDiv = document.getElementById('log');
+            logDiv.innerHTML += '<br>' + new Date().toLocaleTimeString() + ': ' + message;
+            console.log(message);
+        }
+        
+        function testClick(name) {
+            log('testClick called: ' + name);
+            alert('Test click: ' + name);
+        }
+        
+        window.handleBuyClick = function(itemName, itemPrice) {
+            log('handleBuyClick called: ' + itemName + ' - ' + itemPrice);
+            alert('Buy: ' + itemName + ' - ' + itemPrice);
+        };
+        
+        // Create dynamic button (simulating catalog)
+        const container = document.getElementById('dynamic-container');
+        const btn = document.createElement('button');
+        btn.textContent = 'Buy Prism Howler (Dynamic)';
+        btn.setAttribute('onclick', "handleBuyClick('Prism Howler', '₹1800')");
+        container.appendChild(btn);
+        
+        log('Page loaded, functions ready');
+    </script>
+</body>
+</html>
+

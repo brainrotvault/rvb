@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>BrainRot Vault | Bid board</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="./styles.css" />
+    <script src="./shared-data.js"></script>
+  </head>
+  <body class="bid-shell">
+    <header class="site-header">
+      <div class="container header-inner">
+        <a class="logo" href="./index.html">BrainRot<span>Vault</span></a>
+        <nav class="primary-nav">
+          <a href="./index.html#catalog">Catalog</a>
+          <a href="./bid.html" aria-current="page">Bid board</a>
+          <a href="./index.html#security">Security</a>
+          <a href="./index.html#community">Community</a>
+        </nav>
+        <div class="cta-group">
+          <button class="ghost" type="button" onclick="window.location.href='./index.html'">
+            Back to storefront
+          </button>
+        </div>
+        <button class="nav-toggle" aria-label="Toggle menu" onclick="toggleMobileNav()">
+          <span></span><span></span><span></span>
+        </button>
+      </div>
+    </header>
+
+    <main>
+      <section class="hero auction-hero" id="hero">
+        <div class="container hero-grid">
+          <div>
+            <p class="eyebrow">Auction ready</p>
+            <h1>Bid on the Brainrots we post</h1>
+            <p class="lede">
+              This is the spot where you can drop a bid on the curated Brainrot drops I post. Each listing
+              syncs with the vault so you never bid on sold-out stock.
+            </p>
+            <div class="hero-actions">
+              <button class="pill" type="button" onclick="window.location.href='./index.html'">
+                Return to catalog
+              </button>
+              <button class="ghost" type="button" onclick="scrollToSection('auction-board')">
+                Jump to board
+              </button>
+            </div>
+            <p class="live-counter">
+              Active bids right now: <span id="auction-count">34</span>
+            </p>
+          </div>
+          <div class="hero-art">
+            <img src="./assets/garama-madundung.png" alt="Garama & Madundung Brainrot" />
+            <div class="hero-art-badge">
+              <span>Secret auction</span>
+              <strong>Bid starts Rs 4,000</strong>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="section" id="auction-board">
+        <div class="container">
+          <div class="section-head">
+            <div>
+              <p class="eyebrow">Auction board</p>
+              <h2>Submit a bid on posted Brainrots</h2>
+            </div>
+            <p class="muted">
+              Bids are stored locally for now. Once you hit “Place bid”, the amount is remembered for this session
+              and helps you track which Brainrots you’re watching.
+            </p>
+          </div>
+          <div class="grid auction-grid" id="auction-grid"></div>
+        </div>
+      </section>
+
+      <section class="section" id="auction-guide">
+        <div class="container">
+          <p class="muted">
+            Each Brainrot posted here mirrors the vault inventory. You can place one bid per Brainrot per session
+            and see the last bid you submitted. This board updates instantly when the admin panel changes prices,
+            discounts, or stock.
+          </p>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <div class="container footer-grid">
+        <div>
+          <a class="logo" href="./index.html">BrainRot<span>Vault</span></a>
+          <p>Built by the vault crew so squads can stay one step ahead.</p>
+        </div>
+        <div>
+          <h4>Navigation</h4>
+          <a href="./index.html">Overview</a>
+          <a href="./index.html#catalog">Catalog</a>
+          <a href="./index.html#security">Security</a>
+        </div>
+        <div>
+          <h4>Status</h4>
+          <p>Phase: Closed beta</p>
+          <p>Gallery: Auction ready</p>
+          <p>Support: support@brainrotvault.gg</p>
+        </div>
+      </div>
+      <p class="footnote">© <span id="year"></span> BrainRot Vault. Auction board for in-school squads.</p>
+    </footer>
+
+    <script>
+      const BID_STORAGE_KEY = "brainrot_vault_bid";
+
+      function renderAuctionBoard() {
+        const grid = document.getElementById("auction-grid");
+        if (!grid) return;
+        grid.innerHTML = "";
+        const inventory = getInventory().filter((item) => item.amount > 0 && item.auction);
+        if (!inventory.length) {
+          grid.innerHTML = `<p class="muted">No Brainrots available for bidding right now.</p>`;
+          return;
+        }
+        inventory.forEach((item) => {
+          const card = document.createElement("article");
+          card.className = "card auction-card";
+          const startPriceValue = Number(item.auctionStartingPrice ?? item.price) || Number(item.price || 0);
+          card.innerHTML = `
+            <div class="card-media">
+              ${
+                item.image
+                  ? `<img src="${item.image}" alt="${item.name}" loading="lazy" />`
+                  : `<div class="card-media-fallback">${item.tier}</div>`
+              }
+            </div>
+            <div class="card-content">
+              <div class="card-head">
+                <span class="tag">${item.tier}</span>
+                ${
+                  item.mutation
+                    ? `<span class="mutation-badge">${item.mutation}</span>`
+                    : ""
+                }
+              </div>
+              <h3>${item.name}</h3>
+              <p class="muted">Vault value: ${item.value || "—"}</p>
+              <div class="card-meta">
+                <span>Stock: ${item.amount}</span>
+                <span>Status: ${item.status}</span>
+                <span>Watchers: ${item.watchers || 0}</span>
+              </div>
+              <p class="muted">Starting bid: Rs ${startPriceValue.toLocaleString()}</p>
+              <div class="bid-actions">
+                <input
+                  class="bid-input"
+                  type="number"
+                  min="${startPriceValue}"
+                  step="25"
+                  placeholder="Your bid (Rs)"
+                />
+                <button class="pill bid-submit" type="button">Place bid</button>
+                <button class="ghost remove-queue" type="button" onclick="withdrawAuction('${item.id}')">
+                  Remove
+                </button>
+              </div>
+              <p class="muted bid-status" aria-live="polite">
+                Minimum: Rs ${startPriceValue.toLocaleString()}
+              </p>
+            </div>
+          `;
+
+          const statusEl = card.querySelector(".bid-status");
+          const stored = localStorage.getItem(`${BID_STORAGE_KEY}_${item.id}`);
+          if (stored && statusEl) {
+            statusEl.textContent = `Last bid: Rs ${Number(stored).toLocaleString()}.`;
+          }
+
+          const input = card.querySelector(".bid-input");
+          const button = card.querySelector(".bid-submit");
+          button?.addEventListener("click", () => {
+            if (!input) return;
+            const bidValue = Number(input.value);
+            if (Number.isNaN(bidValue) || bidValue <= 0) {
+              if (statusEl) statusEl.textContent = "Enter a valid bid amount.";
+              return;
+            }
+            if (bidValue < item.price) {
+              if (statusEl) {
+                statusEl.textContent = `Bid must be at least Rs ${item.price.toLocaleString()}.`;
+              }
+              return;
+            }
+            localStorage.setItem(`${BID_STORAGE_KEY}_${item.id}`, bidValue);
+            if (statusEl) {
+              statusEl.textContent = `Last bid: Rs ${bidValue.toLocaleString()}.`;
+            }
+            alert(`Bid recorded for ${item.name} at Rs ${bidValue.toLocaleString()}.`);
+            input.value = "";
+          });
+
+          grid.appendChild(card);
+        });
+      }
+
+      function scrollToSection(id) {
+        const el = document.getElementById(id);
+        if (el) el.scrollIntoView({ behavior: "smooth" });
+      }
+
+      function pulseAuctionCounter() {
+        const el = document.getElementById("auction-count");
+        if (!el) return;
+        const min = 28;
+        const max = 52;
+        el.textContent = Math.floor(Math.random() * (max - min + 1)) + min;
+      }
+
+      function toggleMobileNav() {
+        document.querySelector(".site-header")?.classList.toggle("mobile-open");
+      }
+
+      document.addEventListener("DOMContentLoaded", () => {
+        renderAuctionBoard();
+        pulseAuctionCounter();
+        setInterval(pulseAuctionCounter, 7000);
+        const yearEl = document.getElementById("year");
+        if (yearEl) yearEl.textContent = new Date().getFullYear();
+      });
+
+      window.addEventListener("inventoryUpdated", renderAuctionBoard);
+      window.addEventListener("storage", (event) => {
+        if (event.key === "brainrot_vault_inventory") renderAuctionBoard();
+      });
+
+      window.withdrawAuction = function (itemId) {
+        const inventory = getInventory();
+        let changed = false;
+        const updated = inventory.map((entry) => {
+          if (entry.id !== itemId) return entry;
+          changed = true;
+          return {
+            ...entry,
+            auction: false,
+            auctionStartingPrice: 0,
+          };
+        });
+        if (!changed) return;
+        saveInventory(updated);
+        renderAuctionBoard();
+        alert("Listing removed from the bid board.");
+      };
+      window.addEventListener("storage", (event) => {
+        if (event.key === "brainrot_vault_inventory") {
+          renderAuctionBoard();
+        }
+      });
+    </script>
+  </body>
+</html>
+

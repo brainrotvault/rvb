@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Payment Modal</title>
+    <style>
+        dialog {
+            border: none;
+            border-radius: 20px;
+            padding: 2rem;
+            background: #1a1a2e;
+            color: white;
+        }
+        dialog::backdrop {
+            background: rgba(0,0,0,0.8);
+        }
+        button {
+            padding: 10px 20px;
+            margin: 10px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <h1>Test Payment Modal</h1>
+    <button onclick="testModal()">Click to Test Modal</button>
+    
+    <dialog id="payment-modal">
+        <h3>Payment Modal Works!</h3>
+        <p>Item: <span id="payment-item">Test Item</span></p>
+        <button onclick="closeModal()">Close</button>
+    </dialog>
+
+    <script>
+        function testModal() {
+            console.log("testModal called");
+            const modal = document.getElementById("payment-modal");
+            console.log("Modal:", modal);
+            if (modal) {
+                modal.showModal();
+                console.log("Modal should be open");
+            } else {
+                alert("Modal not found!");
+            }
+        }
+        
+        function closeModal() {
+            const modal = document.getElementById("payment-modal");
+            if (modal) modal.close();
+        }
+    </script>
+</body>
+</html>
+

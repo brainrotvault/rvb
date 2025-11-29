@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>BrainRot Vault – Admin Portal</title>
+    <link rel="stylesheet" href="./styles.css" />
+    <link rel="stylesheet" href="./styles-admin.css" />
+    <script src="./shared-data.js"></script>
+  </head>
+  <body class="admin-shell">
+    <aside class="admin-sidebar">
+      <a class="logo" href="./index.html">BrainRot<span>Vault</span></a>
+      <nav>
+        <button class="sidebar-link active" data-panel="overview">Overview</button>
+        <button class="sidebar-link" data-panel="inventory">Inventory</button>
+        <button class="sidebar-link" data-panel="create">Add Brainrot</button>
+        <button class="sidebar-link" data-panel="ops">Operations</button>
+        <button class="sidebar-link" data-panel="alerts">Alerts</button>
+      </nav>
+      <div class="sidebar-meta">
+        <p>Phase: Closed beta</p>
+        <button class="ghost small" onclick="location.href='./index.html'">
+          Back to site
+        </button>
+      </div>
+    </aside>
+
+    <main class="admin-main">
+      <header class="admin-header">
+        <div>
+          <p class="eyebrow">Admin Command</p>
+          <h1>Control center</h1>
+        </div>
+        <div class="admin-actions">
+          <button class="ghost">Sync data</button>
+          <button class="pill">Open marketplace (locked)</button>
+        </div>
+      </header>
+
+      <section class="panel-grid" id="panel-overview">
+        <article class="admin-card">
+          <p class="eyebrow">Brainrot trackers</p>
+          <h2>148</h2>
+          <p>Total profiles curated this week.</p>
+        </article>
+        <article class="admin-card">
+          <p class="eyebrow">Signal latency</p>
+          <h2>132 ms</h2>
+          <p>Median ping across beta squads.</p>
+        </article>
+        <article class="admin-card">
+          <p class="eyebrow">Threats defused</p>
+          <h2>42</h2>
+          <p>Honey-pot triggers prevented live breach.</p>
+        </article>
+      </section>
+
+      <section class="admin-section" id="panel-inventory" hidden>
+        <div class="section-head">
+          <div>
+            <p class="eyebrow">Vault list</p>
+            <h2>Brainrots in review</h2>
+          </div>
+          <button class="pill secondary">Export CSV (beta)</button>
+        </div>
+        <div class="inventory-grid">
+          <div class="table-wrapper">
+              <div class="table">
+              <div class="table-row table-head">
+                <span>Name</span>
+                <span>Tier</span>
+                <span>Vault value</span>
+                <span>Listing price</span>
+                <span>Discount</span>
+                <span>Amount</span>
+                <span>Status</span>
+                <span>Auction</span>
+                <span>Actions</span>
+              </div>
+              <div class="table-body" id="inventory-body"></div>
+            </div>
+          </div>
+          <form id="inventory-form" class="admin-form">
+            <h3>Edit listing</h3>
+            <p class="muted">Select a row to modify name, vault value, price, or units to sell.</p>
+            <div class="form-group">
+              <label for="field-name">Brainrot name</label>
+              <input id="field-name" name="name" required />
+            </div>
+            <div class="form-row double">
+              <div class="form-group">
+                <label for="field-tier">Tier</label>
+                <select id="field-tier" name="tier">
+                  <option>Secret</option>
+                  <option>Godly</option>
+                  <option>Mythic</option>
+                  <option>Legendary</option>
+                  <option>Rare</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="field-status">Status</label>
+                <select id="field-status" name="status">
+                  <option>Cooling</option>
+                  <option>Tracking</option>
+                  <option>Secured</option>
+                  <option>Flagged</option>
+                  <option>Pending</option>
+                </select>
+              </div>
+            </div>
+            <div class="form-group">
+              <label for="field-value">Vault value</label>
+              <input id="field-value" name="value" placeholder="18.4B credits" />
+            </div>
+            <div class="form-row double">
+              <div class="form-group">
+                <label for="field-price">Listing price (credits)</label>
+                <input id="field-price" name="price" type="number" min="0" step="0.01" />
+              </div>
+              <div class="form-group">
+                <label for="field-discount">Discount %</label>
+                <input id="field-discount" name="discount" type="number" min="0" max="100" step="1" />
+              </div>
+              <div class="form-group">
+                <label for="field-amount">Amount to sell</label>
+                <input id="field-amount" name="amount" type="number" min="0" step="1" />
+              </div>
+            </div>
+            <p class="muted" id="price-preview">Final price: —</p>
+            <button class="pill" type="submit">Save changes</button>
+          </form>
+        </div>
+        <p id="form-status" class="muted"></p>
+      </section>
+
+      <section class="admin-section" id="panel-create" hidden>
+        <div class="section-head">
+          <div>
+            <p class="eyebrow">Create Brainrot</p>
+            <h2>Add your own listing</h2>
+          </div>
+        </div>
+        <form id="create-form" class="admin-form create-form">
+          <div class="form-row double">
+            <div class="form-group">
+              <label for="create-name">Name</label>
+              <input id="create-name" name="name" required />
+            </div>
+            <div class="form-group">
+              <label for="create-tier">Rarity</label>
+              <select id="create-tier" name="tier">
+                <option>Secret</option>
+                <option>Godly</option>
+                <option>Mythic</option>
+                <option>Legendary</option>
+                <option>Rare</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="create-description">Description / value</label>
+            <input id="create-description" name="description" placeholder="e.g. Top 5 rare drop" />
+          </div>
+          <div class="form-group">
+            <label for="create-image">PNG path (relative)</label>
+            <input id="create-image" name="image" placeholder="./assets/my-brainrot.png" />
+            <div id="image-preview" style="margin-top: 1rem; padding: 1rem; background: rgba(255,255,255,0.05); border-radius: 8px; text-align: center; min-height: 100px; display: none;">
+              <img id="preview-img" src="" alt="Preview" style="max-width: 200px; max-height: 200px; border-radius: 8px;" />
+              <p id="preview-error" style="color: #ff6b6b; display: none;">Image not found</p>
+            </div>
+          </div>
+          <div class="form-row double">
+            <div class="form-group">
+              <label for="create-price">Listing price (credits)</label>
+              <input id="create-price" name="price" type="number" min="0" step="0.01" required />
+            </div>
+            <div class="form-group">
+              <label for="create-discount">Discount %</label>
+              <input id="create-discount" name="discount" type="number" min="0" max="100" step="1" value="0" />
+            </div>
+            <div class="form-group">
+              <label for="create-amount">Amount to sell</label>
+              <input id="create-amount" name="amount" type="number" min="0" step="1" value="1" />
+            </div>
+          </div>
+          <div class="form-row double">
+            <div class="form-group">
+              <label for="create-status">Status</label>
+              <input id="create-status" name="status" placeholder="Featured / Pending" />
+            </div>
+            <div class="form-group">
+              <label for="create-box">Box color</label>
+              <select id="create-box" name="boxColor">
+                <option value="default">Default</option>
+                <option value="gold">Gold</option>
+                <option value="void">Void</option>
+              </select>
+            </div>
+          </div>
+          <p class="muted" id="create-price-preview">Final price: —</p>
+          <button class="pill secondary" type="submit">Add Brainrot</button>
+        </form>
+      </section>
+
+      <section class="admin-section" id="panel-ops" hidden>
+        <div class="section-head">
+          <div>
+            <p class="eyebrow">Ops board</p>
+            <h2>Deployment timeline</h2>
+          </div>
+          <button class="ghost">Add milestone</button>
+        </div>
+        <div class="timeline admin">
+          <article>
+            <h3>Phase 1 – Beta intel wave</h3>
+            <p>Live now • inviting squads for telemetry soak tests.</p>
+          </article>
+          <article>
+            <h3>Phase 2 – Seller onboarding</h3>
+            <p>In progress • verifying compliance & automation rules.</p>
+          </article>
+          <article>
+            <h3>Phase 3 – Marketplace launch</h3>
+            <p>Locked • release toggles disabled until audit sign-off.</p>
+          </article>
+        </div>
+      </section>
+
+      <section class="admin-section" id="panel-alerts" hidden>
+        <div class="section-head">
+          <div>
+            <p class="eyebrow">Live alerts</p>
+            <h2>Threat monitor feed</h2>
+          </div>
+          <button class="ghost" onclick="refreshAlerts()">Refresh feed</button>
+        </div>
+        <div id="admin-alerts" class="alert-grid"></div>
+      </section>
+    </main>
+
+    <script src="./script-admin.js" defer></script>
+  </body>
+</html>
+

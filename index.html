@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>BrainRot Vault | Elite Brainrot Hub</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="./styles.css" />
+    <script src="./shared-data.js"></script>
+    <script>
+      const DIBS_KEY = "brainrotVaultDibsClaim";
+      window.currentPaymentMethod = "";
+      window.currentItemId = null;
+      window.currentItemName = "";
+      window.currentItemPrice = "";
+      function hasDibsClaimed() {
+        return !!localStorage.getItem(DIBS_KEY);
+      }
+
+      function markDibsClaimed(itemId) {
+        localStorage.setItem(DIBS_KEY, itemId || "reserved");
+        updateReleaseButton();
+      }
+
+      function releaseDibs() {
+        if (!hasDibsClaimed()) {
+          alert("No Dibs reservation to release.");
+          return;
+        }
+        localStorage.removeItem(DIBS_KEY);
+        updateReleaseButton();
+        alert("Dibs hold released.");
+      }
+
+      function updateReleaseButton() {
+        const btn = document.getElementById("payment-release-dibs");
+        if (!btn) return;
+        btn.disabled = !hasDibsClaimed();
+      }
+
+      window.tryClaimBrainrot = function(itemId) {
+        if (!itemId) return null;
+        const inventory = getInventory();
+        const target = inventory.find((entry) => entry.id === itemId);
+        if (!target || target.amount <= 0) return null;
+        target.amount = Math.max(0, target.amount - 1);
+        saveInventory(inventory);
+        return target;
+      };
+
+      window.openPaymentModal = function(itemName, itemPrice, itemId) {
+        const popup = document.getElementById("payment-popup-overlay");
+        const itemDisplay = document.getElementById("payment-item-display");
+        const formSection = document.getElementById("payment-form-section");
+        const summary = document.getElementById("payment-method-summary");
+        const confirmBtn = document.getElementById("payment-confirm-btn");
+
+        if (!popup) {
+          alert("Payment modal missing.");
+          return;
+        }
+
+        window.currentItemId = itemId || null;
+        window.currentItemName = itemName || "Unknown Brainrot";
+        window.currentItemPrice = itemPrice || "Rs 0";
+        window.currentPaymentMethod = "";
+
+        if (itemDisplay) {
+          itemDisplay.textContent = window.currentItemName + " - " + window.currentItemPrice;
+        }
+
+        if (formSection) {
+          formSection.style.display = "none";
+        }
+        if (summary) {
+          summary.textContent = "Select a payment method to continue.";
+        }
+        if (confirmBtn) {
+          confirmBtn.disabled = true;
+          confirmBtn.textContent = "Select a method";
+        }
+
+        ["payment-fullname", "payment-roblox-username", "payment-display-name"].forEach((id) => {
+          const el = document.getElementById(id);
+          if (el) el.value = "";
+        });
+
+        popup.style.display = "flex";
+        document.body.style.overflow = "hidden";
+        updateReleaseButton();
+      };
+
+      window.closePaymentPopup = function() {
+        const popup = document.getElementById("payment-popup-overlay");
+        if (popup) {
+          popup.style.display = "none";
+          document.body.style.overflow = "";
+        }
+        window.currentPaymentMethod = "";
+        updateReleaseButton();
+      };
+
+      window.selectPaymentMethod = function(method) {
+        if (method === "dibs" && hasDibsClaimed()) {
+          alert("Dibs it! can only be used once per player.");
+          return;
+        }
+        window.currentPaymentMethod = method;
+        const summary = document.getElementById("payment-method-summary");
+        const formSection = document.getElementById("payment-form-section");
+        const confirmBtn = document.getElementById("payment-confirm-btn");
+        if (summary) {
+          summary.textContent = method === "school"
+            ? "Pay at School selected — pay the squad directly."
+            : "Dibs it! selected — claim it now, pay later.";
+        }
+        if (formSection) {
+          formSection.style.display = "block";
+        }
+        if (confirmBtn) {
+          confirmBtn.disabled = false;
+          confirmBtn.textContent = method === "school" ? "Confirm Pay at School" : "Confirm Dibs it!";
+        }
+      };
+
+      window.confirmPayment = function() {
+        if (!window.currentPaymentMethod) {
+          alert("Choose a payment method first.");
+          return;
+        }
+        const fullName = document.getElementById("payment-fullname").value.trim();
+        const robloxUsername = document.getElementById("payment-roblox-username").value.trim();
+        const displayName = document.getElementById("payment-display-name").value.trim();
+        if (!fullName || !robloxUsername || !displayName) {
+          alert("Fill in all Roblox details.");
+          return;
+        }
+        if (window.currentPaymentMethod === "dibs" && hasDibsClaimed()) {
+          alert("You already have a Dibs reservation.");
+          return;
+        }
+        const claimed = window.tryClaimBrainrot(window.currentItemId);
+        if (!claimed) {
+          alert("Sorry, that Brainrot is sold out.");
+          window.closePaymentPopup();
+          return;
+        }
+        if (window.currentPaymentMethod === "dibs") {
+          markDibsClaimed(window.currentItemId);
+        }
+        const methodText = window.currentPaymentMethod === "school" ? "Pay at School" : "Dibs it!";
+        const message = `Payment method: ${methodText}\n\nItem: ${window.currentItemName} - ${window.currentItemPrice}\nFull Name: ${fullName}\nRoblox Username: ${robloxUsername}\nDisplay Name: ${displayName}\n\nWe will verify payment and deliver the Brainrot shortly.`;
+        alert(message);
+        window.closePaymentPopup();
+      };
+
+      window.buyItem = function(btn) {
+        btn.style.transform = "scale(0.95)";
+        setTimeout(() => btn.style.transform = "", 150);
+        const name = btn.getAttribute("data-name");
+        const price = btn.getAttribute("data-price");
+        const itemId = btn.getAttribute("data-item-id");
+        if (name && price) {
+          window.openPaymentModal(name, price, itemId);
+        } else {
+          alert("Brainrot data missing. Please refresh.");
+        }
+        return false;
+      };
+
+      document.addEventListener("DOMContentLoaded", function() {
+        const overlay = document.getElementById("payment-popup-overlay");
+        if (overlay) {
+          overlay.addEventListener("click", function(e) {
+            if (e.target === overlay) {
+              window.closePaymentPopup();
+            }
+          });
+        }
+        updateReleaseButton();
+      });
+    </script>
+  </head>
+  <body>
+    <header class="site-header">
+      <div class="container header-inner">
+        <a class="logo" href="/">BrainRot<span>Vault</span></a>
+        <nav class="primary-nav">
+          <a href="#catalog">Catalog</a>
+          <a href="./bid.html">Bid board</a>
+          <a href="#how-it-works">How it works</a>
+          <a href="#security">Security</a>
+          <a href="#community">Community</a>
+        </nav>
+        <div class="cta-group">
+          <button class="ghost" onclick="toggleWaitlist()">Request Brainrot</button>
+        </div>
+        <button class="nav-toggle" aria-label="Toggle menu" onclick="toggleMobileNav()">
+          <span></span><span></span><span></span>
+        </button>
+      </div>
+    </header>
+
+    <main>
+      <section class="hero" id="hero">
+        <div class="container hero-grid">
+          <div>
+            <p class="eyebrow">Steal a Brainrot • Curated drop list</p>
+            <h1>
+              Secure, trade, and flex your Brainrots without the grind.
+            </h1>
+            <p class="lede">
+              BrainRot Vault tracks every secret, godly, and mythic Brainrot so you
+              can strategize smarter, not harder. No sales yet—just pure intel,
+              trend reports, and squad-ready tools.
+            </p>
+            <div class="hero-actions">
+              <button class="pill" onclick="toggleWaitlist()">Request early access</button>
+              <button class="ghost" onclick="scrollToSection('catalog')">
+                Explore showcase
+              </button>
+              <button class="ghost bid-link" type="button" onclick="window.location.href='./bid.html'">
+                Enter bid board
+              </button>
+            </div>
+            <p class="live-counter">
+              Live players: <span id="stat-users">0</span>
+            </p>
+          </div>
+          <div class="hero-art">
+            <img src="./assets/mieteteira.png" alt="Mieteteira Bicicleteira Yin Yang drop" />
+            <div class="hero-art-badge">
+              <span>Exclusive drop</span>
+              <strong>Rs 2,500</strong>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="metrics" class="section metrics">
+        <div class="container">
+          <div class="section-head">
+            <div>
+              <p class="eyebrow">Pulse telemetry</p>
+              <h2>Real-time intel snapshots</h2>
+            </div>
+            <button class="ghost" onclick="toggleWaitlist()">Subscribe to intel briefings</button>
+          </div>
+          <div class="grid metrics-grid" id="metrics-grid"></div>
+        </div>
+      </section>
+
+      <section id="catalog" class="section">
+        <div class="container">
+          <div class="section-head catalog-head">
+            <div>
+              <p class="eyebrow">Spotlight collection</p>
+              <h2>Brainrot intelligence board</h2>
+            </div>
+            <div class="catalog-controls">
+              <div class="filters" id="tier-filters">
+                <button class="chip active" data-tier="all">All tiers</button>
+                <button class="chip" data-tier="Secret">Secret</button>
+                <button class="chip" data-tier="Godly">Godly</button>
+                <button class="chip" data-tier="Mythic">Mythic</button>
+                <button class="chip" data-tier="Legendary">Legendary</button>
+              </div>
+              <label class="search-field">
+                <input type="search" id="catalog-search" placeholder="Search Brainrots" aria-label="Search Brainrots" />
+                <span>⌕</span>
+              </label>
+            </div>
+          </div>
+          <div class="grid showcase" id="showcase-grid"></div>
+        </div>
+      </section>
+
+      <section id="labs" class="section split labs">
+        <div class="container lab-grid">
+          <div class="lab-copy">
+            <p class="eyebrow">Blueprint lab</p>
+            <h2>Plug-and-play tactics for every squad role.</h2>
+            <p>
+              Deploy curated templates for thieves, defenders, and analysts. Each lab pack ships with ready-to-run checklists,
+              asset requirements, and counter-strats harvested from top squads.
+            </p>
+            <div class="lab-tabs" id="lab-tabs"></div>
+          </div>
+          <div class="lab-panel" id="lab-panel"></div>
+        </div>
+      </section>
+      <section id="security" class="section dark">
+        <div class="container security-grid">
+          <div>
+            <p class="eyebrow">Guardian stack</p>
+            <h2>Triple-layer shield for every Brainrot.</h2>
+            <p>
+              From honey-pot vaults to instant breach alerts, we pair game meta
+              knowledge with real-time telemetry so you never lose a flex piece
+              again.
+            </p>
+            <ul class="pill-list">
+              <li>Spawn verification nodes</li>
+              <li>Player reputation engine</li>
+              <li>Deterrent blueprint library</li>
+              <li>Encrypted squad relay</li>
+            </ul>
+          </div>
+          <div class="security-card">
+            <h3>Threat Monitor</h3>
+            <div id="threat-feed"></div>
+          </div>
+        </div>
+      </section>
+
+      <section id="faq" class="section">
+        <div class="container">
+          <div class="section-head">
+            <div>
+              <p class="eyebrow">Need clarity?</p>
+              <h2>Questions from the Brainrot underground.</h2>
+            </div>
+            <button class="ghost" onclick="toggleWaitlist()">Talk to curator team</button>
+          </div>
+          <div class="accordion" id="faq-accordion"></div>
+        </div>
+      </section>
+
+      <section class="section cta">
+        <div class="container cta-card">
+          <div>
+            <p class="eyebrow">Zero sales. Pure intel.</p>
+            <h2>Get notified when trading opens.</h2>
+            <p>We’re finalizing compliance and seller tooling. Join the waitlist to claim your tag before launch.</p>
+          </div>
+          <form class="cta-form" onsubmit="handleWaitlist(event)">
+            <input type="email" placeholder="you@example.gg" required />
+            <button class="pill" type="submit">Request Brainrot</button>
+          </form>
+        </div>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <div class="container footer-grid">
+        <div>
+          <a class="logo" href="/">BrainRot<span>Vault</span></a>
+          <p>Built by curators obsessed with the Brainrot grind loop.</p>
+        </div>
+        <div>
+          <h4>Navigation</h4>
+          <a href="#hero">Overview</a>
+          <a href="#catalog">Catalog</a>
+          <a href="#security">Security</a>
+          <a href="./admin.html">Admin portal</a>
+        </div>
+        <div>
+          <h4>Status</h4>
+          <p>Phase: Closed beta</p>
+          <p>Next drop: TBA</p>
+          <p>Support: support@brainrotvault.gg</p>
+        </div>
+      </div>
+      <p class="footnote">© <span id="year"></span> BrainRot Vault. Fan-made concept inspired by Steal a Brainrot.</p>
+    </footer>
+
+    <dialog id="waitlist-modal">
+      <form method="dialog" class="modal-card" onsubmit="closeModal()">
+        <button class="close" aria-label="Close modal" onclick="closeModal()">×</button>
+        <h3>Request a Brainrot</h3>
+        <p>Tell us which Brainrot you want and we'll contact you with availability.</p>
+        <input type="text" placeholder="Discord handle" required />
+        <input type="email" placeholder="Email address" required />
+        <textarea placeholder="Which Brainrot are you looking for?" rows="3"></textarea>
+        <button class="pill" type="submit">Submit request</button>
+      </form>
+    </dialog>
+
+    <!-- Simple Popup Overlay -->
+    <div id="payment-popup-overlay" class="popup-overlay" style="display: none;">
+      <div class="popup-container">
+        <button class="popup-close" onclick="closePaymentPopup()">×</button>
+        <h3>Complete Your Purchase</h3>
+        
+        <div class="payment-item-display">
+          <p class="muted">Item:</p>
+          <p class="payment-item-name" id="payment-item-display">Loading...</p>
+        </div>
+
+        <div class="payment-instructions">
+          <h4>How it works</h4>
+          <p>Pick a payment method, fill out the Roblox details, and we'll drop the Brainrot straight to your account after verification.</p>
+          <ol>
+            <li>Choose either <strong>Pay at School</strong> or <strong>Dibs it!</strong></li>
+            <li>Fill out Full Name, Roblox Username, and Display Name</li>
+            <li>Submit and wait for confirmation — our handlers will verify and deliver immediately</li>
+          </ol>
+        </div>
+
+        <div class="payment-options">
+          <h4>Choose Payment Method:</h4>
+          
+          <button class="payment-option-btn" onclick="selectPaymentMethod('school')">
+            <div class="option-content">
+              <strong>Pay at School</strong>
+              <p>Pay in person at school</p>
+            </div>
+            <span class="option-arrow">→</span>
+          </button>
+          
+          <button class="payment-option-btn" onclick="selectPaymentMethod('dibs')">
+            <div class="option-content">
+              <strong>Dibs it!</strong>
+              <p>Claim it now, pay later</p>
+            </div>
+            <span class="option-arrow">→</span>
+          </button>
+        </div>
+
+        <p class="payment-method-summary" id="payment-method-summary">Select a method to continue.</p>
+        <div id="payment-form-section" style="display: none;">
+          <div class="payment-form">
+            <div class="form-group">
+              <label for="payment-fullname">Full Name *</label>
+              <input type="text" id="payment-fullname" name="fullname" placeholder="Enter your full name" required />
+            </div>
+            
+            <div class="form-group">
+              <label for="payment-roblox-username">Roblox Username *</label>
+              <input type="text" id="payment-roblox-username" name="robloxUsername" placeholder="@username" required />
+            </div>
+            
+            <div class="form-group">
+              <label for="payment-display-name">Roblox Display Name *</label>
+              <input type="text" id="payment-display-name" name="displayName" placeholder="Display name" required />
+            </div>
+
+            <p class="payment-note">* All fields are required.</p>
+          </div>
+        </div>
+        <div class="payment-footer">
+          <button class="pill" type="button" id="payment-confirm-btn" disabled onclick="confirmPayment()">Confirm purchase</button>
+          <button class="ghost release-dibs" type="button" id="payment-release-dibs" disabled onclick="releaseDibs()">
+            Release Dibs hold
+          </button>
+          <p class="payment-footer-hint">Button enables once a payment method is chosen.</p>
+        </div>
+      </div>
+    </div>
+
+    <script src="./script.js"></script>
+    
+    <!-- FINAL FIX SCRIPT: Runs last to ensure everything works -->
+    <script>
+      (function() {
+        console.log("Running FINAL FIX script...");
+        
+        // 1. FIX IMAGE PATHS
+        try {
+          const raw = localStorage.getItem('brainrotVaultInventory');
+          if (raw) {
+            let inventory = JSON.parse(raw);
+            let changed = false;
+            
+            // Check if Los Mobilis exists, if not add it (for existing users)
+            const hasLosMobilis = inventory.some(i => i.name === "Los Mobilis");
+            if (!hasLosMobilis) {
+               inventory.unshift({
+                  id: "inv-losmobilis-fix",
+                  name: "Los Mobilis",
+                  tier: "Secret",
+                  status: "Available",
+                  value: "Custom value",
+                  price: 3000,
+                  discount: 0,
+                  amount: 1,
+                  mutation: "UNKNOWN",
+                  watchers: 0,
+                  image: "./assets/Los-Mobilis.png",
+                  highlight: "",
+               });
+               changed = true;
+            }
+            
+            inventory = inventory.map(item => {
+              // Fix Los Mobilis path
+              if (item.name === "Los Mobilis" && (!item.image || !item.image.includes("Los-Mobilis.png"))) {
+                console.log("Fixing Los Mobilis image path...");
+                item.image = "./assets/Los-Mobilis.png";
+                changed = true;
+              }
+              return item;
+            });
+            
+            if (changed) {
+              localStorage.setItem('brainrotVaultInventory', JSON.stringify(inventory));
+              console.log("Inventory patched successfully!");
+              // Force reload if needed, but let's try to just re-render if the function exists
+              if (window.renderShowcase) window.renderShowcase();
+              else location.reload(); 
+            }
+          }
+        } catch (e) {
+          console.error("Fix script error:", e);
+        }
+      })();
+    </script>
+  </body>
+</html>
+

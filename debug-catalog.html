@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Debug Catalog Button</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        body { padding: 2rem; background: #05060b; color: white; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 2rem; }
+    </style>
+</head>
+<body>
+    <h1>Debug Catalog Button</h1>
+    <div id="log" style="background: #222; padding: 1rem; margin-bottom: 1rem; font-family: monospace; height: 100px; overflow-y: scroll;">Log...</div>
+
+    <div id="showcase-grid" class="grid">
+        <!-- Manually inserted card based on script.js logic -->
+        <article class="card">
+            <div class="card-media">
+                <div class="card-media-fallback">Secret</div>
+            </div>
+            <div class="card-content">
+                <div class="card-head">
+                    <span class="tag">Secret</span>
+                    <span class="mutation-badge">Phase Rift</span>
+                </div>
+                <h3>Eclipse Seraph</h3>
+                <div class="card-meta">
+                    <span>Vault value: 18.4B credits</span>
+                    <span>Watchers: 43</span>
+                </div>
+                <div class="card-price">
+                    <span>Sale price</span>
+                    <strong>₹2,400</strong>
+                    <small>Instant delivery slot</small>
+                </div>
+                <!-- The exact button structure from script.js -->
+                <button class="ghost buy-btn" type="button" data-name="Eclipse Seraph" data-price="₹2,400">Buy it now!</button>
+            </div>
+        </article>
+    </div>
+
+    <script>
+        function log(msg) {
+            const l = document.getElementById('log');
+            l.innerHTML += `<br>${new Date().toLocaleTimeString()}: ${msg}`;
+            console.log(msg);
+        }
+
+        // 1. Define the modal function
+        window.openPaymentModal = function(name, price) {
+            log(`OPEN MODAL: ${name} - ${price}`);
+            alert(`SUCCESS! Modal would open for: ${name}`);
+        }
+
+        // 2. The Global Handler Logic from index.html
+        document.addEventListener('click', function(e) {
+            log(`Document click: ${e.target.tagName} class=${e.target.className}`);
+            
+            const btn = e.target.closest('.buy-btn');
+            
+            if (btn) {
+                log('Caught .buy-btn click!');
+                e.preventDefault();
+                e.stopPropagation();
+                
+                let name = btn.getAttribute('data-name');
+                let price = btn.getAttribute('data-price');
+                
+                log(`Data attributes: name=${name}, price=${price}`);
+                
+                if (name && price) {
+                    window.openPaymentModal(name, price);
+                } else {
+                    log('MISSING DATA ATTRIBUTES');
+                }
+            }
+        }, true); // Capture phase
+    </script>
+</body>
+</html>
